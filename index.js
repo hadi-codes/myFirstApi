@@ -2,6 +2,8 @@ const express = require('express');
 const Joi = require('joi');
 const app = express();
 const login = require('./login');
+const info=require('./info').getInfo
+//const userInfo=require('./info').userInfo
 const newUsers = require('./signup').user;
 var reqBody;
 const argon2 = require('argon2');
@@ -12,6 +14,26 @@ app.use(express.json());
 
 app.get('/', (req, res) => {
     res.send('Hello fam');
+});
+
+// Getting user info 
+app.get('/api/user/info/:token', (req, res) => {
+   const token=req.params.token;
+   module.exports.token=token;
+   
+ info(token).then(function(docs){
+        if(docs.length>0){
+            res.status(200).send(JSON.stringify(docs))
+        }
+        else{
+            res.status(400).send('Opps...')
+        }
+
+
+ })
+ 
+ 
+
 });
 
 
@@ -29,8 +51,7 @@ app.post('/api/signup/', (req, res) => {
     }
 
 
-    Joi.validate(req.body, schema, (err, result) => {
-        var joiRes = (Joi.validate(req.body, schema));
+    var joiRes = Joi.validate(req.body, schema, (err, result) => {
 
         if (!err) {
 
@@ -39,16 +60,16 @@ app.post('/api/signup/', (req, res) => {
             module.exports.reqBody = reqBody;
 
             newUsers(reqBody, function (ok) {
-                
-                if (ok == false) { res.status(200).send(JSON.stringify({code:200,msg:'New user signed up '})) }
-                else { res.status(200).send(JSON.stringify({code:200,msg:'Error This E-mail already registered'})) }
+
+                if (ok == false) { res.status(200).send(JSON.stringify({ code: 200, msg: 'New user signed up ' })) }
+                else { res.status(200).send(JSON.stringify({ code: 200, msg: 'Error This E-mail already registered' })) }
             });
 
         }
 
         else {
-          
-            
+
+
             res.status(400).send(JSON.stringify(joiRes.error.details[0].message));
         }
 
@@ -71,14 +92,14 @@ app.post('/api/login/', (req, res) => {
         Joi.validate(req.body, loginSchema)
         if (!err) {
             login.userLogin(reqBody, function (ok) {
-                if (ok == true) { res.status(200).send(JSON.stringify({code:200,msg:'logged in successfully'})) }
-                else { res.status(200).send(JSON.stringify({code:200,msg:'email or password is wrong'})) }
+                if (ok == true) { res.status(200).send(JSON.stringify({ code: 200, msg: 'logged in successfully' })) }
+                else { res.status(200).send(JSON.stringify({ code: 200, msg: 'email or password is wrong' })) }
 
             });
         }
         else {
             joiLogin = Joi.validate(req.body, loginSchema)
-            res.status(400).send(JSON.stringify({code:400,msg:joiLogin.error.details[0].message}))
+            res.status(400).send(JSON.stringify({ code: 400, msg: joiLogin.error.details[0].message }))
         }
     })
 

@@ -1,5 +1,6 @@
 const argon2 = require('argon2');
 const index = require('./index');
+const crypto=require('crypto');
 
 // Mongodb db
 const url = "mongodb+srv://boi:boiboi123@cluster0-5rtck.mongodb.net/test?retryWrites=true";
@@ -45,12 +46,18 @@ const user = function (reqBody, callback) {
 
 
 // inserting function 
-function InsertNewUser(reqBody) {
+async function InsertNewUser(reqBody) {
 
     // encrypting the password with argon2 algorithm
     argon2.hash(reqBody.password).then(hash => {
         reqBody.password = hash;
     })
+    
+    await crypto.randomBytes(48,function(err,buffer){
+        reqBody.token=buffer.toString('hex')
+        console.log(reqBody)
+       })
+   
     MongoClient.connect(url, function (err, db) {
         if (err) throw err;
         db.db('myuserdb').collection("user").insertOne(reqBody, function (err, res) {
