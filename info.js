@@ -2,7 +2,7 @@ const index = require('./index');
 var userInfo=[];
 
 // Mongodb db
-const url = "mongodb+srv://boi:boiboi123@cluster0-5rtck.mongodb.net/test?retryWrites=true";
+const url = "";
 
 // Create a new MongoClient
 const MongoClient = require('mongodb').MongoClient;
