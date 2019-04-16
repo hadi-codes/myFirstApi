@@ -6,6 +6,7 @@ const info = require('./info').getInfo
 const newUsers = require('./signup').user;
 const logout = require('./logout').logout;
 const resInfo = require('./login').resInfo
+const verifiy = require('./emailVerification').verifiy
 var reqBody;
 const argon2 = require('argon2');
 
@@ -94,7 +95,7 @@ app.post('/api/login/', (req, res) => {
         Joi.validate(req.body, loginSchema)
         if (!err) {
             login.userLogin(reqBody, function (ok) {
-              
+
                 if (ok == true) {
                     res.status(200).send(JSON.stringify([{ resInfo: { code: 200, msg: 'logged in successfully' } }, { userInfo: login.resInfo }]))
                 }
@@ -122,6 +123,22 @@ app.get('/api/user/logout/:token', (req, res) => {
     logout(token).then(res.status(200).send())
 
 
+
+
+})
+
+
+// Email verification
+
+app.get('/api/user/verifiy/:token', (req, res) => {
+    const token = req.params.token;
+    module.exports.token = token
+    verifiy(token, function (ok) {
+        if (ok == true) {
+            res.status(200).send(JSON.stringify({ code: 200, msg: 'email is verified' }))
+        }
+        else { res.status(401).send(JSON.stringify({ code: 401, msg: 'something gone wrong' })) }
+    })
 
 
 })
