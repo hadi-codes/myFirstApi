@@ -2,9 +2,10 @@ const express = require('express');
 const Joi = require('joi');
 const app = express();
 const login = require('./login');
-const info=require('./info').getInfo
-//const userInfo=require('./info').userInfo
+const info = require('./info').getInfo
 const newUsers = require('./signup').user;
+const logout = require('./logout').logout;
+const resInfo = require('./login').resInfo
 var reqBody;
 const argon2 = require('argon2');
 
@@ -18,21 +19,21 @@ app.get('/', (req, res) => {
 
 // Getting user info 
 app.get('/api/user/info/:token', (req, res) => {
-   const token=req.params.token;
-   module.exports.token=token;
-   
- info(token).then(function(docs){
-        if(docs.length>0){
+    const token = req.params.token;
+    module.exports.token = token;
+
+    info(token).then(function (docs) {
+        if (docs.length > 0) {
             res.status(200).send(JSON.stringify(docs))
         }
-        else{
-            res.status(400).send('Opps...')
+        else {
+            res.status(400).send('Opps.. ')
         }
 
 
- })
- 
- 
+    })
+
+
 
 });
 
@@ -82,6 +83,7 @@ app.post('/api/signup/', (req, res) => {
 // login
 app.post('/api/login/', (req, res) => {
 
+
     reqBody = req.body
     const loginSchema = {
         email: Joi.string().email({ minDomainAtoms: 2 }).required(),
@@ -92,10 +94,15 @@ app.post('/api/login/', (req, res) => {
         Joi.validate(req.body, loginSchema)
         if (!err) {
             login.userLogin(reqBody, function (ok) {
-                if (ok == true) { res.status(200).send(JSON.stringify({ code: 200, msg: 'logged in successfully' })) }
+              
+                if (ok == true) {
+                    res.status(200).send(JSON.stringify([{ resInfo: { code: 200, msg: 'logged in successfully' } }, { userInfo: login.resInfo }]))
+                }
                 else { res.status(200).send(JSON.stringify({ code: 200, msg: 'email or password is wrong' })) }
 
             });
+
+
         }
         else {
             joiLogin = Joi.validate(req.body, loginSchema)
@@ -105,6 +112,20 @@ app.post('/api/login/', (req, res) => {
 
 
 });
+
+
+// Logout
+app.get('/api/user/logout/:token', (req, res) => {
+    const token = req.params.token;
+    module.exports.token = token;
+
+    logout(token).then(res.status(200).send())
+
+
+
+
+})
+
 
 
 const port = process.env.PORT || 3001;

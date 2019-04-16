@@ -10,8 +10,11 @@
   "license": "ISC",
   "dependencies": {
     "argon2": "^0.21.0",
+    "bluebird": "^3.5.4",
+    "crypto-promise": "^2.1.0",
     "joi": "^14.3.1",
-    "mongodb": "^3.1.13"
+    "mongodb": "^3.1.13",
+    "sendgrid": "^5.2.3"
   },
   "devDependencies": {},
   "description": ""

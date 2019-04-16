@@ -1,6 +1,7 @@
 const argon2 = require('argon2');
 const index = require('./index');
-const crypto=require('crypto');
+const crypto = require('crypto');
+const emailer = require('./emailer').emailer
 
 // Mongodb db
 const url = "mongodb+srv://boi:boiboi123@cluster0-5rtck.mongodb.net/test?retryWrites=true";
@@ -47,24 +48,29 @@ const user = function (reqBody, callback) {
 
 // inserting function 
 async function InsertNewUser(reqBody) {
-
+    emailer(reqBody)
     // encrypting the password with argon2 algorithm
     argon2.hash(reqBody.password).then(hash => {
         reqBody.password = hash;
     })
-    
-    await crypto.randomBytes(48,function(err,buffer){
-        reqBody.token=buffer.toString('hex')
-        console.log(reqBody)
-       })
-   
-    MongoClient.connect(url, function (err, db) {
+
+    await crypto.randomBytes(48, function (err, buffer) {
+        reqBody.token = buffer.toString('hex')
+
+    })
+
+    await MongoClient.connect(url, function (err, db) {
         if (err) throw err;
+
+        reqBody.isActiveted = false
+        console.log(reqBody)
         db.db('myuserdb').collection("user").insertOne(reqBody, function (err, res) {
             if (err) throw err;
             db.close();
         });
     });
+
+    console.log(reqBody);
 }
 
 
