@@ -8,8 +8,10 @@ const logout = require('./logout').logout;
 const resInfo = require('./login').resInfo
 const verifiy = require('./emailVerification').verifiy
 var reqBody;
+const changePass=require('./changePass').changePass
 const argon2 = require('argon2');
-
+const resetPassToken=require('./resetPass1').resetPassToken
+const newPass=require('./resetPass2').newPass
 
 app.use(express.json());
 
@@ -143,7 +145,57 @@ app.get('/api/user/verifiy/:token', (req, res) => {
 
 })
 
+// Changing password
+app.post('/api/user/changepass/', (req, res) => {
+    
+    const schema = {
+        email: Joi.string().email({ minDomainAtoms: 2 }).required(),
+        currentPass: Joi.string().min(8).max(21).required(),
+        newPass: Joi.string().min(8).max(21).required()
+    }
+    Joi.validate(req.body, schema, (err, result) => {
+        var reqBody=req.body
+        if (!err) {
+            changePass(req.body,function(ok){
+                res.send(ok)
+            })
+        } else {
+            res.send(err)
+        }
+    })
 
+})
+
+// sending token link to change password
+app.post('/api/user/resetpass/',(req,res)=>{
+    const schema={email:Joi.string().email({minDomainAtoms:2}).required()}
+    Joi.validate(req.body,schema,(err,result)=>{
+        
+        if(!err){
+            resetPassToken(req.body,function(resMsg){
+                res.send(resMsg)
+            })
+
+
+        }else{
+            res.send(err)
+        }
+    })
+})
+
+// Reset password with token 
+app.post('/api/user/newpass/:token',(req,res)=>{
+    const schema={newPass: Joi.string().min(8).max(21).required()}
+    Joi.validate(req.body,schema,(err,result)=>{
+        if(!err){
+            newPass(req.params.token,newPass,function(msg){
+                res.send(msg)
+            })
+        }else{
+            res.send(err)
+        }
+    })
+})
 
 const port = process.env.PORT || 3001;
 

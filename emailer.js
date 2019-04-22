@@ -40,7 +40,7 @@ module.exports = {
 
 
 
-      }).catch(() => { console.log(err) })
+      }).catch((err) => { console.log(err) })
     })
 
       .catch((err) => {
@@ -51,7 +51,7 @@ module.exports = {
 
 
     function sendEmail(mailTokenInfo) {
-      var sg = require('sendgrid')('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');
+      var sg = require('sendgrid')('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');
 
       var request = sg.emptyRequest({
         method: 'POST',
