@@ -3,7 +3,7 @@ const Joi = require('joi');
 const app = express();
 const login = require('./login');
 const info = require('./info').getInfo
-const newUsers = require('./signup').user;
+const newUser = require('./signup').newUser;
 const logout = require('./logout').logout;
 const resInfo = require('./login').resInfo
 const verifiy = require('./emailVerification').verifiy
@@ -63,10 +63,9 @@ app.post('/api/signup/', (req, res) => {
 
             module.exports.reqBody = reqBody;
 
-            newUsers(reqBody, function (ok) {
+            newUser(reqBody, function (ok) {
 
-                if (ok == false) { res.status(200).send(JSON.stringify({ code: 200, msg: 'New user signed up ' })) }
-                else { res.status(200).send(JSON.stringify({ code: 200, msg: 'Error This E-mail already registered' })) }
+                res.send(ok)
             });
 
         }

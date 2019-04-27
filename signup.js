@@ -1,77 +1,70 @@
-const argon2 = require('argon2');
+
+
 const index = require('./index');
-const crypto = require('crypto');
+const argon2 = require('argon2');
+
+const crypto = require('crypto')
 const emailer = require('./emailer').emailer
+const moment = require('moment')
+
 
 // Mongodb db
-const url = "mongodb+srv://boi:boiboi123@cluster0-5rtck.mongodb.net/test?retryWrites=true";
+const url = "mongodb+srv://boi:boiboi123@cluster0-5rtck.mongodb.net/myuserdb?retryWrites=true";
 
 // Create a new MongoClient
 const MongoClient = require('mongodb').MongoClient;
 
-const assert = require('assert');
 
-// Create a new MongoClient
+module.exports={
+newUser:(reqbody,callback)=> {
+    //conncet to db
+    MongoClient.connect(url, { useNewUrlParser: true }).then((db) => {
+        // query for email to chech if already signed up
+        db.db('myuserdb').collection('user').findOne({ email: `${reqbody.email}` }).then((docs) => {
+          
+            if (docs == null) {
+                // hashing the password
+                argon2.hash(reqbody.password).then((hash) => {
+                    reqbody.password = hash
+                    console.log(hash)
 
-const dbName = 'myuserdb';
+                    const randomToken = async () => {
+                        const buffer = await crypto.randomBytes(48);
+                        return buffer.toString("hex");
+                    };
+                    // creating account token 
+                    randomToken().then((token) => {
+                        console.log(token)
+                        reqbody.token = token
+                        reqbody.isEmailVerified=false
+                        // inserting the new User
+                        db.db('myuserdb').collection('user').insertOne(reqbody).then(() => {
+                            // sending email with verifiction token 
+                            emailer(reqbody)
+                            callback([{res:{code:200,msg:'you signed up succsefully'}},{accInfo:{firstname:reqbody.firstname,lastname:reqbody.lastname,token:reqbody.token}}])
+                            db.close();
+                            //err handler for db insert
+                        }).catch((err) => { console.log(err) })
+
+                        //err handler for random TOken
+                    }).catch((err) => { console.log(err) })
+
+                })
+                    //err handelr for argon
+                    .catch((err) => { })
+            } else {
+                callback([{res:{code:200,msg:'email already exists'}}])
+                db.close()
+                console.log('account found already in db')
+            }
+
+            //err handler for query
+        }).catch((err) => { console.log(err) })
 
 
-const user = function (reqBody, callback) {
+        //error handler for MC
+    }).catch((err) => { console.log(err) })
 
-
-
-    const client = new MongoClient(url);
-
-    client.connect(function (err) {
-        assert.equal(null, err);
-        const db = client.db(dbName);
-        findUser(db, function (ok) {
-            if (ok == false) { callback(ok); InsertNewUser(reqBody); }
-            else { callback(ok); }
-
-            client.close();
-        });
-    });
-
-
-    // Checking if the user already in the db
-    const findUser = function (db, callback) {
-        const collection = db.collection('user');
-
-        collection.find({ 'email': `${reqBody.email}` }).toArray(function (err, docs) {
-            assert.equal(err, null);
-            callback(docs.length > 0);
-        });
-    }
 }
 
-
-// inserting function 
-async function InsertNewUser(reqBody) {
-    emailer(reqBody)
-    // encrypting the password with argon2 algorithm
-    argon2.hash(reqBody.password).then(hash => {
-        reqBody.password = hash;
-    })
-
-    await crypto.randomBytes(48, function (err, buffer) {
-        reqBody.token = buffer.toString('hex')
-
-    })
-
-    await MongoClient.connect(url, function (err, db) {
-        if (err) throw err;
-
-        reqBody.isActiveted = false
-        console.log(reqBody)
-        db.db('myuserdb').collection("user").insertOne(reqBody, function (err, res) {
-            if (err) throw err;
-            db.close();
-        });
-    });
-
-    console.log(reqBody);
 }
-
-
-module.exports.user = user;
