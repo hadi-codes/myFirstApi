@@ -12,7 +12,7 @@ const changePass=require('./changePass').changePass
 const argon2 = require('argon2');
 const resetPassToken=require('./resetPass1').resetPassToken
 const newPass=require('./resetPass2').newPass
-
+const reSendVerificatinToken=require('./verificationTokenResender').reSendToken
 app.use(express.json());
 
 
@@ -89,19 +89,15 @@ app.post('/api/login/', (req, res) => {
     reqBody = req.body
     const loginSchema = {
         email: Joi.string().email({ minDomainAtoms: 2 }).required(),
-        password: Joi.string().min(8).max(21).required()
+        password: Joi.required()
     };
     module.exports.reqBody = reqBody;
     var joiLogin = Joi.validate(req.body, loginSchema, (err, result) => {
         Joi.validate(req.body, loginSchema)
         if (!err) {
-            login.userLogin(reqBody, function (ok) {
-
-                if (ok == true) {
-                    res.status(200).send(JSON.stringify([{ resInfo: { code: 200, msg: 'logged in successfully' } }, { userInfo: login.resInfo }]))
-                }
-                else { res.status(200).send(JSON.stringify({ code: 200, msg: 'email or password is wrong' })) }
-
+            login.userLogin(reqBody, function (loginRes) {
+                res.send(loginRes)
+               
             });
 
 
@@ -187,13 +183,34 @@ app.post('/api/user/newpass/:token',(req,res)=>{
     const schema={newPass: Joi.string().min(8).max(21).required()}
     Joi.validate(req.body,schema,(err,result)=>{
         if(!err){
-            newPass(req.params.token,newPass,function(msg){
+            newPass(req.params.token,req.bodynewPass,function(msg){
                 res.send(msg)
             })
         }else{
             res.send(err)
         }
     })
+})
+
+
+// reSend Verification Token 
+app.post('/api/resendtoken/',(req,res)=>{
+
+
+    const schema={email:Joi.string().email({minDomainAtoms:2}).required()}
+    Joi.validate(req.body,schema,(err,result)=>{
+        
+        if(!err){
+            reSendVerificatinToken(req.body,function(resMsg){
+                res.send(resMsg)
+            })
+
+
+        }else{
+            res.send(err)
+        }
+    })
+
 })
 
 const port = process.env.PORT || 3001;

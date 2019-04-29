@@ -23,6 +23,8 @@ const MongoClient = require('mongodb').MongoClient;
 module.exports = {
     newPass: (token, newPass, callback) => {
         console.log('1- runnin the function')
+        console.log('token '+token)
+      console.log('newPass '+newPass)
         MongoClient.connect(url, { useNewUrlParser: true }).then((db) => {
             db.db('resetPassToken').collection('token').findOne({ 'token': `${token}` }).then((docs) => {
                 if (docs != null) {

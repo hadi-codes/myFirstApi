@@ -16,7 +16,7 @@ module.exports = {
                     doc=docs
                     callback(true)
                     console.log('3')
-                    db.db('myuserdb').collection('user').updateOne({ 'email': `${docs.email}` }, { $set: { 'isActiveted': true } }).then(() => {
+                    db.db('myuserdb').collection('user').updateOne({ 'email': `${docs.email}` }, { $set: { 'isEmailVerified': true } }).then(() => {
                         console.log('4')
                         db.db('accActivated').collection('user').deleteMany({email:docs.email,token:docs.token}).then(()=>{
                             console.log('5')
@@ -28,12 +28,9 @@ module.exports = {
                     isDoc=false
                     callback(false)
                    
-                    
+                    db.close();
                 }
-            }).then(()=>{
-                console.log('5')
-                db.close();
-            }).catch((err)=>{console.log(err)})
+            })
 
 
         }).catch((err) => {
