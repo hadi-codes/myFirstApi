@@ -1,24 +1,98 @@
 const express = require('express');
 const Joi = require('joi');
+const crypto=require('crypto')
 const app = express();
-const login = require('./login');
 const info = require('./info').getInfo
-const newUser = require('./signup').newUser;
-const logout = require('./logout').logout;
-const resInfo = require('./login').resInfo
-const verifiy = require('./emailVerification').verifiy
-var reqBody;
-const changePass=require('./changePass').changePass
+const newUser = require('./routes/user/signup').newUser;
+
+const emailVerification = require('./routes/user/emailVerification')
+
 const argon2 = require('argon2');
 const resetPassToken=require('./resetPass1').resetPassToken
 const newPass=require('./resetPass2').newPass
-const reSendVerificatinToken=require('./verificationTokenResender').reSendToken
+const reSendVerificatinToken=require('./routes/user/verificationTokenResender')
+var ExpressBrute = require('express-brute')
+const   MongoStore = require('express-brute-mongo');
+var MongoClient = require('mongodb').MongoClient;
+const multer=require('multer')
+const GridFsStorage=require('multer-gridfs-storage')
+const GridFsStream=require('gridfs-stream')
+const path=require('path')
+const loginv2=require('./routes/user/login')
+const signup=require('./routes/user/signup')
+const logout=require('./routes/user/logout')
+const changePass=require('./routes/user/changePass')
+var storage = new GridFsStorage({
+    url: 'mongodb+srv://boi:boiboi123@cluster0-5rtck.mongodb.net/file?retryWrites=true',
+    file: (req, file) => {
+      return new Promise((resolve, reject) => {
+        crypto.randomBytes(16, (err, buf) => {
+          if (err) {
+            return reject(err);
+          }
+          const filename = buf.toString('hex') + path.extname(file.originalname);
+          const fileInfo = {
+            filename: filename,
+            bucketName: 'uploads'
+          };
+          resolve(fileInfo);
+        });
+      });
+    }
+  });
+  const upload = multer({ storage });
+
+
+
+
+
+
+
+
+
+/*
+var store = new MongoStore(function (ready) {
+    MongoClient.connect('mongodb+srv://boi:boiboi123@cluster0-5rtck.mongodb.net/store?retryWrites=true',{useNewUrlParser:true}).then((db)=>{
+
+    
+    
+      ready(db.db('store').collection('bruteforce-store'));
+    });
+  });
+  
+  var bruteforce = new ExpressBrute(store);
+*/
+var store = new ExpressBrute.MemoryStore(); // stores state locally, don't use this in production
+var bruteforce = new ExpressBrute(store);
 app.use(express.json());
+app.use('/api/login/',loginv2) //login 
+app.use('/api/signup/',signup)// signup
+app.use('/api/logout/:token',logout)
+app.use('/api/resendToken',reSendVerificatinToken)
+app.use('/api/emailVerification/:token',emailVerification)
+app.use('/api/user/changePass',changePass)//change password
+
+app.post('/profile', upload.single('avatar'), function (req, res, next) {
+    // req.file is the `avatar` file
+    // req.body will hold the text fields, if there were any
+    console.log(res.file)
+  })
 
 
 app.get('/', (req, res) => {
     res.send('Hello fam');
 });
+
+app.get('/auth',
+  bruteforce.prevent, // error 403 if we hit this route too often
+  function (req, res, next) {
+      
+    res.send('Success!');
+    console.log(req.ip)
+    }
+  
+);
+
 
 // Getting user info 
 app.get('/api/user/info/:token', (req, res) => {
@@ -41,125 +115,6 @@ app.get('/api/user/info/:token', (req, res) => {
 });
 
 
-// Signup
-app.post('/api/signup/', (req, res) => {
-
-    // Signup Schema
-    const schema = {
-        firstname: Joi.string().trim().alphanum().min(2).max(30).required(),
-        lastname: Joi.string().trim().alphanum().min(2).max(30).required(),
-        midname: Joi.string().trim().alphanum().allow('').min(1).max(30).optional(),
-        email: Joi.string().email({ minDomainAtoms: 2 }).required(),
-        password: Joi.string().min(8).max(21).required()
-
-    }
-
-
-    var joiRes = Joi.validate(req.body, schema, (err, result) => {
-
-        if (!err) {
-
-            reqBody = req.body;
-
-            module.exports.reqBody = reqBody;
-
-            newUser(reqBody, function (ok) {
-
-                res.send(ok)
-            });
-
-        }
-
-        else {
-
-
-            res.status(400).send(JSON.stringify(joiRes.error.details[0].message));
-        }
-
-
-
-    })
-
-});
-
-// login
-app.post('/api/login/', (req, res) => {
-
-
-    reqBody = req.body
-    const loginSchema = {
-        email: Joi.string().email({ minDomainAtoms: 2 }).required(),
-        password: Joi.required()
-    };
-    module.exports.reqBody = reqBody;
-    var joiLogin = Joi.validate(req.body, loginSchema, (err, result) => {
-        Joi.validate(req.body, loginSchema)
-        if (!err) {
-            login.userLogin(reqBody, function (loginRes) {
-                res.send(loginRes)
-               
-            });
-
-
-        }
-        else {
-            joiLogin = Joi.validate(req.body, loginSchema)
-            res.status(400).send(JSON.stringify({ code: 400, msg: joiLogin.error.details[0].message }))
-        }
-    })
-
-
-});
-
-
-// Logout
-app.get('/api/user/logout/:token', (req, res) => {
-    const token = req.params.token;
-    module.exports.token = token;
-
-    logout(token).then(res.status(200).send())
-
-
-
-
-})
-
-
-// Email verification
-
-app.get('/api/user/verifiy/:token', (req, res) => {
-    const token = req.params.token;
-    module.exports.token = token
-    verifiy(token, function (ok) {
-        if (ok == true) {
-            res.status(200).send(JSON.stringify({ code: 200, msg: 'email is verified' }))
-        }
-        else { res.status(401).send(JSON.stringify({ code: 401, msg: 'something gone wrong' })) }
-    })
-
-
-})
-
-// Changing password
-app.post('/api/user/changepass/', (req, res) => {
-    
-    const schema = {
-        email: Joi.string().email({ minDomainAtoms: 2 }).required(),
-        currentPass: Joi.string().min(8).max(21).required(),
-        newPass: Joi.string().min(8).max(21).required()
-    }
-    Joi.validate(req.body, schema, (err, result) => {
-        var reqBody=req.body
-        if (!err) {
-            changePass(req.body,function(ok){
-                res.send(ok)
-            })
-        } else {
-            res.send(err)
-        }
-    })
-
-})
 
 // sending token link to change password
 app.post('/api/user/resetpass/',(req,res)=>{
@@ -183,7 +138,7 @@ app.post('/api/user/newpass/:token',(req,res)=>{
     const schema={newPass: Joi.string().min(8).max(21).required()}
     Joi.validate(req.body,schema,(err,result)=>{
         if(!err){
-            newPass(req.params.token,req.bodynewPass,function(msg){
+            newPass(req.params.token,req.body.newPass,function(msg){
                 res.send(msg)
             })
         }else{
@@ -192,26 +147,12 @@ app.post('/api/user/newpass/:token',(req,res)=>{
     })
 })
 
-
-// reSend Verification Token 
-app.post('/api/resendtoken/',(req,res)=>{
-
-
-    const schema={email:Joi.string().email({minDomainAtoms:2}).required()}
-    Joi.validate(req.body,schema,(err,result)=>{
-        
-        if(!err){
-            reSendVerificatinToken(req.body,function(resMsg){
-                res.send(resMsg)
-            })
-
-
-        }else{
-            res.send(err)
-        }
-    })
-
+app.post('/test/',upload.single('image'),(req,res)=>{
+    console.log(req.file)
+    res.send(req.file)
 })
+
+//app.post('/api/user/uploadProfilPic',)
 
 const port = process.env.PORT || 3001;
 
@@ -220,3 +161,4 @@ app.listen(port);
 
 console.log(`listing on port .... ${port}`);
 
+module.exports=app;

@@ -19,7 +19,7 @@ module.exports = {
         db = client.db('myuserdb');
         
         docs =await db.collection('user').find({ 'token': `${token}` }).toArray();
-         if(docs.length>0){delete docs[0].password;delete docs[0]._id}
+         if(docs.length>0){delete docs[0].password;}
          console.log(docs)
         return docs;
         
