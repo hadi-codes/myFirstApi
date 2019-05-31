@@ -1,6 +1,6 @@
 const express=require('express')
 const router =express.Router();
-const Joi=require('joi')
+const Joi=require('@hapi/joi')
 // Mongodb db
 const url = "mongodb+srv://boi:boiboi123@cluster0-5rtck.mongodb.net/myuserdb?retryWrites=true";
 
