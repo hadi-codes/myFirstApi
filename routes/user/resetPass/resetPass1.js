@@ -1,6 +1,6 @@
 
 
-const index = require('./index')
+const index = require('../../index')
 const argon2=require('argon2')
 const crypto = require('crypto')
 var mailTokenInfo = {

@@ -14,8 +14,6 @@ const MongoClient = require('mongodb').MongoClient;
 
 
 
-var resInfo;
-var token;
 
 
 router.post('/',(req,res)=>{

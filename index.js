@@ -6,8 +6,8 @@ const info = require('./routes/user/info')
 const newUser = require('./routes/user/signup').newUser;
 const emailVerification = require('./routes/user/emailVerification')
 const argon2 = require('argon2');
-const resetPassToken=require('./resetPass1').resetPassToken
-const newPass=require('./resetPass2').newPass
+const resetPass=require('./routes/resetPass/resetPass1')
+const newPass=require('./routes/resetPass/resetPass2')
 const reSendVerificatinToken=require('./routes/user/verificationTokenResender')
 var ExpressBrute = require('express-brute')
 const   MongoStore = require('express-brute-mongo');
@@ -35,7 +35,8 @@ app.use('/api/user/info/:token',info)//user info
 app.use('/api/resendToken',reSendVerificatinToken)
 app.use('/api/emailVerification/:token',emailVerification)
 app.use('/api/user/changePass',changePass)//change password
-
+app.use('/api/resetpass/',resetPass)//resetpass1
+app.use('/api/newPass/',newPass)//resetPass2 new pass
 
 
 app.get('/', (req, res) => {
