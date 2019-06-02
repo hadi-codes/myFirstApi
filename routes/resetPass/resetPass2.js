@@ -1,5 +1,5 @@
 const express = require('express')
-const router = express.Router();
+const router = express.Router({mergeParams:true});
 const index = require('../../index')
 const argon2 = require('argon2')
 const crypto = require('crypto')
@@ -24,7 +24,7 @@ router.post('/', (req, res) => {
     const joiRes = Joi.validate(req.body, schema, (err) => {
         if (!err) {
             console.log('1- runnin the function')
-            console.log('token ' + req.body.token)
+            console.log('token ' + req.params.token)
             console.log('newPass ' + req.body.password)
             MongoClient.connect(url, { useNewUrlParser: true }).then((db) => {
                 db.db('resetPassToken').collection('token').findOne({ 'token': `${req.body.token}` }).then((docs) => {
