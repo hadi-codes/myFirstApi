@@ -17,6 +17,7 @@ router.get('/',(req,res)=>{
       console.log(doc)
       delete doc.password
       res.send(doc)
+      db.close()
     })
     
 
